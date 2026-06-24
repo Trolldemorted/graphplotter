@@ -18,6 +18,16 @@ struct Cli {
 
     #[arg(short = 'u', long = "y-unit")]
     y_unit: Option<String>,
+
+    #[arg(long = "since", value_parser = parse_ts)]
+    since: Option<DateTime<Utc>>,
+
+    #[arg(long = "until", value_parser = parse_ts)]
+    until: Option<DateTime<Utc>>,
+}
+
+fn parse_ts(s: &str) -> Result<DateTime<Utc>, String> {
+    s.parse::<DateTime<Utc>>().map_err(|e| e.to_string())
 }
 
 struct Series {
@@ -151,10 +161,21 @@ fn plot(series: &[Series], output: &Path, y_unit: Option<&str>) -> Result<(), Bo
 
 fn main() {
     let cli = Cli::parse();
+    if let (Some(a), Some(b)) = (cli.since, cli.until)
+        && a > b
+    {
+        eprintln!("error: --since ({a}) is after --until ({b})");
+        std::process::exit(1);
+    }
     let mut all = Vec::with_capacity(cli.inputs.len());
     for path in &cli.inputs {
         match read_series(path) {
-            Ok(s) => all.push(s),
+            Ok(mut s) => {
+                s.points.retain(|(t, _)| {
+                    cli.since.is_none_or(|a| *t >= a) && cli.until.is_none_or(|b| *t <= b)
+                });
+                all.push(s);
+            }
             Err(e) => {
                 eprintln!("error reading {}: {}", path.display(), e);
                 std::process::exit(1);
