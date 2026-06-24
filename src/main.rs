@@ -19,6 +19,9 @@ struct Cli {
     #[arg(short = 'u', long = "y-unit")]
     y_unit: Option<String>,
 
+    #[arg(long = "title", default_value = "graphplotter")]
+    title: String,
+
     #[arg(long = "since", value_parser = parse_ts)]
     since: Option<DateTime<Utc>>,
 
@@ -71,7 +74,12 @@ fn read_series(path: &Path) -> Result<Series, Box<dyn Error>> {
     })
 }
 
-fn plot(series: &[Series], output: &Path, y_unit: Option<&str>) -> Result<(), Box<dyn Error>> {
+fn plot(
+    series: &[Series],
+    output: &Path,
+    y_unit: Option<&str>,
+    title: &str,
+) -> Result<(), Box<dyn Error>> {
     let (mut x_min, mut x_max) = (DateTime::<Utc>::MAX_UTC, DateTime::<Utc>::MIN_UTC);
     let (mut y_min, mut y_max) = (f64::INFINITY, f64::NEG_INFINITY);
     for s in series {
@@ -112,7 +120,7 @@ fn plot(series: &[Series], output: &Path, y_unit: Option<&str>) -> Result<(), Bo
         .margin(20)
         .x_label_area_size(50)
         .y_label_area_size(60)
-        .caption("graphplotter", ("sans-serif", 28))
+        .caption(title, ("sans-serif", 28))
         .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
 
     let mut mesh = chart.configure_mesh();
@@ -182,7 +190,7 @@ fn main() {
             }
         }
     }
-    if let Err(e) = plot(&all, &cli.output, cli.y_unit.as_deref()) {
+    if let Err(e) = plot(&all, &cli.output, cli.y_unit.as_deref(), &cli.title) {
         eprintln!("error writing {}: {}", cli.output.display(), e);
         std::process::exit(1);
     }
