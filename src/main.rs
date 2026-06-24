@@ -133,9 +133,9 @@ fn plot(
 
     let mut chart = ChartBuilder::on(&root)
         .margin(20)
-        .x_label_area_size(50)
-        .y_label_area_size(60)
-        .caption(title, ("sans-serif", 28))
+        .x_label_area_size(60)
+        .y_label_area_size(70)
+        .caption(title, ("sans-serif", 48))
         .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
 
     let x_fmt = x_axis_format(x_max - x_min);
@@ -144,6 +144,9 @@ fn plot(
     mesh.x_label_formatter(&x_format)
         .x_labels(8)
         .y_labels(8)
+        .x_label_style(("sans-serif", 24))
+        .y_label_style(("sans-serif", 24))
+        .axis_desc_style(("sans-serif", 24))
         .light_line_style(RGBColor(230, 230, 230));
     if let Some(u) = y_unit {
         mesh.y_desc(u);
