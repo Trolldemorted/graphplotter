@@ -38,6 +38,21 @@ struct Series {
     points: Vec<(DateTime<Utc>, f64)>,
 }
 
+fn x_axis_format(span: chrono::Duration) -> &'static str {
+    let secs = span.num_seconds().unsigned_abs();
+    if secs <= 60 * 60 {
+        "%H:%M:%S"
+    } else if secs <= 60 * 60 * 24 {
+        "%H:%M"
+    } else if secs <= 60 * 60 * 24 * 7 {
+        "%m-%d %H:%M"
+    } else if secs <= 60 * 60 * 24 * 365 {
+        "%Y-%m-%d"
+    } else {
+        "%Y-%m"
+    }
+}
+
 fn series_name(path: &Path) -> String {
     path.file_stem()
         .and_then(|s| s.to_str())
@@ -123,8 +138,10 @@ fn plot(
         .caption(title, ("sans-serif", 28))
         .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
 
+    let x_fmt = x_axis_format(x_max - x_min);
+    let x_format = move |x: &DateTime<Utc>| x.format(x_fmt).to_string();
     let mut mesh = chart.configure_mesh();
-    mesh.x_label_formatter(&|x: &DateTime<Utc>| x.format("%Y-%m-%d %H:%M:%S").to_string())
+    mesh.x_label_formatter(&x_format)
         .x_labels(8)
         .y_labels(8)
         .light_line_style(RGBColor(230, 230, 230));
