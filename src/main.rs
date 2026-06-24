@@ -113,7 +113,7 @@ fn plot(
         y_max += pad;
     }
 
-    let root = BitMapBackend::new(output, (1280, 720)).into_drawing_area();
+    let root = BitMapBackend::new(output, (2560, 1440)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
