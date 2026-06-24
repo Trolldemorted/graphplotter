@@ -15,6 +15,9 @@ struct Cli {
 
     #[arg(short = 'o', long = "output")]
     output: PathBuf,
+
+    #[arg(short = 'u', long = "y-unit")]
+    y_unit: Option<String>,
 }
 
 struct Series {
@@ -58,7 +61,7 @@ fn read_series(path: &Path) -> Result<Series, Box<dyn Error>> {
     })
 }
 
-fn plot(series: &[Series], output: &Path) -> Result<(), Box<dyn Error>> {
+fn plot(series: &[Series], output: &Path, y_unit: Option<&str>) -> Result<(), Box<dyn Error>> {
     let (mut x_min, mut x_max) = (DateTime::<Utc>::MAX_UTC, DateTime::<Utc>::MIN_UTC);
     let (mut y_min, mut y_max) = (f64::INFINITY, f64::NEG_INFINITY);
     for s in series {
@@ -102,13 +105,15 @@ fn plot(series: &[Series], output: &Path) -> Result<(), Box<dyn Error>> {
         .caption("graphplotter", ("sans-serif", 28))
         .build_cartesian_2d(x_min..x_max, y_min..y_max)?;
 
-    chart
-        .configure_mesh()
-        .x_label_formatter(&|x: &DateTime<Utc>| x.format("%Y-%m-%d %H:%M:%S").to_string())
+    let mut mesh = chart.configure_mesh();
+    mesh.x_label_formatter(&|x: &DateTime<Utc>| x.format("%Y-%m-%d %H:%M:%S").to_string())
         .x_labels(8)
         .y_labels(8)
-        .light_line_style(RGBColor(230, 230, 230))
-        .draw()?;
+        .light_line_style(RGBColor(230, 230, 230));
+    if let Some(u) = y_unit {
+        mesh.y_desc(u);
+    }
+    mesh.draw()?;
 
     let palette = [
         RGBColor(31, 119, 180),
@@ -156,7 +161,7 @@ fn main() {
             }
         }
     }
-    if let Err(e) = plot(&all, &cli.output) {
+    if let Err(e) = plot(&all, &cli.output, cli.y_unit.as_deref()) {
         eprintln!("error writing {}: {}", cli.output.display(), e);
         std::process::exit(1);
     }
